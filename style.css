@@ -4,60 +4,170 @@ body {
     color: white;
     font-family: Arial;
     overflow: hidden;
+    touch-action: manipulation; /* 防止手机浏览器默认手势 */
+}
+
+/* 横屏提示 */
+@media screen and (orientation: portrait) {
+    body::before {
+        content: "请将手机横屏放置";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.9);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2rem;
+        z-index: 9999;
+    }
 }
 
 .container {
     position: relative;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-#progressRing {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-#arm {
-    width: 80px;
-    height: 200px;
-    background: url('arm.png') no-repeat;
-    position: absolute;
-    top: 60%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    transition: transform 0.3s;
-}
-
-.panel {
+#resetBtn {
     position: absolute;
     top: 20px;
     left: 20px;
-    z-index: 100;
-}
-
-button {
     padding: 10px 20px;
     background: #4CAF50;
     border: none;
     border-radius: 5px;
     color: white;
-    cursor: pointer;
+    font-size: 1rem;
+    z-index: 100;
 }
 
+/* 计数器样式 */
+#repCounter {
+    margin-top: 30px;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+/* 进度环容器 */
+.ring-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+}
+
+/* 进度环画布 */
+#progressRing {
+    display: block;
+}
+
+/* 中间百分比文字 */
+#percentage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* 手臂动画 */
+#arm {
+    width: 80px;
+    height: 200px;
+    background: url('img/arm.png') center no-repeat;
+    background-size: contain;
+    margin: 20px auto;
+    transition: transform 0.3s ease-out;
+}
+
+/* 示例动画 */
 .demo-animation {
     position: absolute;
     top: 20px;
     right: 20px;
     width: 150px;
-    border: 2px solid white;
+    border: 2px solid #4CAF50;
     border-radius: 10px;
 }
 
+/* 实时反馈文字 */
 #feedback {
-    position: absolute;
-    bottom: 30px;
-    width: 100%;
+    margin-top: 20px;
     text-align: center;
-    font-size: 1.2em;
+    min-height: 60px;
+    font-size: 1.2rem;
+    padding: 0 20px;
+}
+
+/* 弹窗样式 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #333;
+    padding: 25px;
+    border-radius: 15px;
+    width: 85%;
+    max-width: 350px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.modal-content h2 {
+    color: #4CAF50;
+    text-align: center;
+    margin-top: 0;
+}
+
+.analysis-item {
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 5px;
+    background: #444;
+}
+
+.analysis-item.good {
+    border-left: 4px solid #4CAF50;
+}
+
+.analysis-item.bad {
+    border-left: 4px solid #f44336;
+}
+
+.tips {
+    background: #555;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+
+#closeModal {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 25px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
 }

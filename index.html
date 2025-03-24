@@ -8,23 +8,35 @@
 </head>
 <body>
     <div class="container">
-        <!-- 控制面板 -->
-        <div class="panel">
-            <button id="resetBtn">重置训练</button>
-            <div id="counter">0/3</div>
-        </div>
-
-        <!-- 进度环 -->
-        <canvas id="progressRing" width="200" height="200"></canvas>
+        <!-- 控制按钮 -->
+        <button id="resetBtn">重置训练</button>
         
-        <!-- 实时动画 -->
+        <!-- 大字号计数器 -->
+        <div id="repCounter">0/3</div>
+        
+        <!-- 带百分比的进度环 -->
+        <div class="ring-container">
+            <canvas id="progressRing" width="200" height="200"></canvas>
+            <div id="percentage">0%</div>
+        </div>
+        
+        <!-- 手臂动画 -->
         <div id="arm"></div>
         
         <!-- 示例动画 -->
-        <img src="img/demo.gif" class="demo-animation">
+        <img src="img/demo.gif" class="demo-animation" alt="示范动作">
         
-        <!-- 反馈信息 -->
+        <!-- 实时反馈 -->
         <div id="feedback"></div>
+        
+        <!-- 结果弹窗 -->
+        <div id="resultModal" class="modal">
+            <div class="modal-content">
+                <h2>训练报告</h2>
+                <div id="analysisResult"></div>
+                <button id="closeModal">关闭</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
