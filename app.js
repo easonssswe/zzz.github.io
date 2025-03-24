@@ -2,12 +2,13 @@
 class BicepTrainer {
     constructor() {
         this.state = {
-            isTraining: false,
-            baseGamma: null,
-            currentRep: 0,
-            isPeak: false,
-            motionData: [],
-            startTime: null
+            isTraining: false,  // 原有属性
+            baseGamma: null,    // 原有属性
+            currentRep: 0,      // 原有属性
+            isPeak: false,      // 原有属性
+            motionData: [],     // 原有属性
+            startTime: null,    // 原有属性
+            isProcessing: false // 新增属性（最后一行无逗号）
         };
 
         this.elements = {
@@ -34,7 +35,7 @@ class BicepTrainer {
                 PEAK: 200,
                 FINISH: [300, 100, 300]
             },
-            COOLDOWN: 1000
+            COOLDOWN: 1500
         };
 
         this.init();
@@ -68,6 +69,7 @@ class BicepTrainer {
     }
 
     calibrate() {
+        this.showCalibrationProgress();
         this.showFeedback("校准中...保持手机静止");
         const samples = [];
         
@@ -92,6 +94,8 @@ class BicepTrainer {
     }
 
     handleOrientation(event) {
+        if (this.state.isProcessing || Date.now() - this.state.lastVibration < this.CONFIG.COOLDOWN) return;
+this.state.isProcessing = true;
         if (!this.state.isTraining || !this.state.baseGamma) return;
 
         const gamma = event.gamma;
@@ -103,6 +107,7 @@ class BicepTrainer {
         this.updateUI(progress);
         this.checkProgress(progress);
         this.recordMotionData(gamma, progress);
+        this.state.isProcessing = false;
     }
 
     updateUI(progress) {
@@ -202,6 +207,7 @@ class BicepTrainer {
         this.updateUI(0);
         this.elements.repCounter.textContent = "0/3";
         this.showFeedback("已重置训练数据");
+        window.removeEventListener('deviceorientation', this.handleOrientation);
     }
 
     restart() {
