@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>智能二头弯举训练</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 控制面板 -->
+        <div class="panel">
+            <button id="resetBtn">重置训练</button>
+            <div id="counter">0/3</div>
+        </div>
+
+        <!-- 进度环 -->
+        <canvas id="progressRing" width="200" height="200"></canvas>
+        
+        <!-- 实时动画 -->
+        <div id="arm"></div>
+        
+        <!-- 示例动画 -->
+        <img src="img/demo.gif" class="demo-animation">
+        
+        <!-- 反馈信息 -->
+        <div id="feedback"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
