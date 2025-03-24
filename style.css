@@ -170,4 +170,30 @@ body {
     border: none;
     border-radius: 5px;
     font-size: 1rem;
+}/* 确保控制面板不被其他元素覆盖 */
+.control-panel {
+    z-index: 1000;
+}
+
+/* 统一按钮样式 */
+.control-panel button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* 手机横屏时的额外调整 */
+@media (max-height: 500px) {
+    .control-panel {
+        top: 10px;
+        left: 10px;
+    }
+    .control-panel button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
 }

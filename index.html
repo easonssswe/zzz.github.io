@@ -5,11 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>智能二头弯举训练</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 新增的横屏锁定样式 */
+        html {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            width: 100vh;
+            height: 100vw;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-right: -50%;
+            margin-left: -50%;
+            overflow-x: hidden;
+        }
+        
+        /* 控制按钮容器 */
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        /* 校准按钮特定样式 */
+        #calibrateBtn {
+            background: #2196F3;
+            display: none; /* 默认隐藏，校准模式才显示 */
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- 控制按钮 -->
-        <button id="resetBtn">重置训练</button>
+        <!-- 修改后的控制按钮组 -->
+        <div class="control-panel">
+            <button id="resetBtn">重置训练</button>
+            <button id="calibrateBtn">校准起始位置</button>
+        </div>
         
         <!-- 大字号计数器 -->
         <div id="repCounter">0/3</div>
