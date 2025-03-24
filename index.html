@@ -1,13 +1,13 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>智能二头弯举训练</title>
+    <title>二头弯举专业训练</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* iOS点击高光移除 */
+        /* iOS点击优化 */
         * {
             -webkit-tap-highlight-color: transparent;
         }
@@ -17,7 +17,7 @@
     <!-- 初始提示弹窗 -->
     <div id="initModal" class="modal active">
         <div class="modal-content">
-            <h2>🏋️ 使用说明</h2>
+            <h2>🏋️ 欢迎使用</h2>
             <div class="instruction">
                 <div class="step">
                     <div class="number">1</div>
@@ -27,9 +27,9 @@
                     <div class="number">2</div>
                     <p><strong>横屏</strong>握持手机</p>
                 </div>
-                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIiBmb250LXNpemU9IjE0Ij7miqTmtYvor5Xlm77moIc8L3RleHQ+PC9zdmc+" 
-                         alt="横屏示意图" 
-                         class="demo-img">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCI+PHJlY3Qgd2lkdGg9IjE1MCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5oqk5rWL6K+V5Zu+5qCHPC90ZXh0Pjwvc3ZnPg==" 
+                     alt="横屏示意图"
+                     class="demo-img">
             </div>
             <button id="startBtn">🚀 开始训练</button>
         </div>
@@ -37,39 +37,28 @@
 
     <!-- 主界面 -->
     <div class="container">
-        <!-- 校准按钮 -->
-        <button id="calibrateBtn" class="control-btn">🎯 校准起始位</button>
+        <div class="header">
+            <button id="resetBtn" class="control-btn">🔄 重置</button>
+            <button id="calibrateBtn" class="control-btn">🎯 校准</button>
+        </div>
         
-        <!-- 训练界面 -->
-        <div class="training-ui">
-            <div id="repCounter" class="rep-counter">0/3</div>
-            
-            <div class="ring-container">
+        <div class="training-area">
+            <div id="repCounter">0/3</div>
+            <div class="progress-ring">
                 <canvas id="progressRing" width="200" height="200"></canvas>
-                <div id="percentage" class="percentage">0%</div>
+                <div id="percentage">0%</div>
             </div>
-            
-            <div id="arm" class="arm"></div>
-            
-            <div id="feedback" class="feedback"></div>
+            <div id="arm"></div>
+            <div id="feedback">准备校准...</div>
         </div>
 
         <!-- 结果弹窗 -->
         <div id="resultModal" class="modal">
             <div class="modal-content">
                 <h2>📊 训练报告</h2>
-                <div id="analysisResult" class="analysis"></div>
+                <div id="analysisResult"></div>
                 <button id="restartBtn" class="action-btn">🔄 重新开始</button>
             </div>
-        </div>
-    </div>
-
-    <!-- 权限提示 -->
-    <div id="permissionHelp" class="modal">
-        <div class="modal-content">
-            <h2>🔑 需要权限</h2>
-            <p>请允许"运动与方向"访问权限</p>
-            <button onclick="location.reload()" class="action-btn">🔄 我已开启权限</button>
         </div>
     </div>
 

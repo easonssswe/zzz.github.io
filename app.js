@@ -1,3 +1,4 @@
+// app.js
 class BicepTrainer {
     constructor() {
         this.state = {
@@ -5,13 +6,15 @@ class BicepTrainer {
             baseGamma: null,
             currentRep: 0,
             isPeak: false,
-            motionData: []
+            motionData: [],
+            startTime: null
         };
 
         this.elements = {
             initModal: document.getElementById('initModal'),
             startBtn: document.getElementById('startBtn'),
             container: document.querySelector('.container'),
+            resetBtn: document.getElementById('resetBtn'),
             calibrateBtn: document.getElementById('calibrateBtn'),
             repCounter: document.getElementById('repCounter'),
             ctx: document.getElementById('progressRing').getContext('2d'),
@@ -20,8 +23,7 @@ class BicepTrainer {
             feedback: document.getElementById('feedback'),
             resultModal: document.getElementById('resultModal'),
             analysisResult: document.getElementById('analysisResult'),
-            restartBtn: document.getElementById('restartBtn'),
-            permissionHelp: document.getElementById('permissionHelp')
+            restartBtn: document.getElementById('restartBtn')
         };
 
         this.CONFIG = {
@@ -31,7 +33,8 @@ class BicepTrainer {
                 REP: [100, 50, 100],
                 PEAK: 200,
                 FINISH: [300, 100, 300]
-            }
+            },
+            COOLDOWN: 1000
         };
 
         this.init();
@@ -40,36 +43,25 @@ class BicepTrainer {
     init() {
         this.setupEventListeners();
         this.initProgressRing();
-        this.checkOrientation();
     }
 
     setupEventListeners() {
         this.elements.startBtn.addEventListener('click', () => this.startApp());
+        this.elements.resetBtn.addEventListener('click', () => this.reset());
         this.elements.calibrateBtn.addEventListener('click', () => this.calibrate());
         this.elements.restartBtn.addEventListener('click', () => this.restart());
-        window.addEventListener('deviceorientation', (e) => this.handleOrientation(e));
-    }
-
-    initProgressRing() {
-        this.elements.ctx.lineWidth = 10;
-        this.elements.ctx.strokeStyle = '#4CAF50';
-        this.elements.ctx.lineCap = 'round';
     }
 
     async startApp() {
         try {
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 const permission = await DeviceOrientationEvent.requestPermission();
-                if (permission !== 'granted') {
-                    this.showPermissionHelp();
-                    return;
-                }
+                if (permission !== 'granted') return;
             }
             
             this.elements.initModal.classList.remove('active');
             this.elements.container.style.display = 'block';
-            this.showFeedback("将手机平放在桌面，点击校准按钮");
-            this.elements.calibrateBtn.style.display = 'block';
+            this.showFeedback("请将手机平放后点击校准");
         } catch (error) {
             this.showFeedback(`错误: ${error.message}`);
         }
@@ -95,7 +87,8 @@ class BicepTrainer {
 
     startTraining() {
         this.state.isTraining = true;
-        this.elements.calibrateBtn.style.display = 'none';
+        this.state.startTime = Date.now();
+        window.addEventListener('deviceorientation', (e) => this.handleOrientation(e));
     }
 
     handleOrientation(event) {
@@ -141,6 +134,8 @@ class BicepTrainer {
     }
 
     handleRepComplete() {
+        if (Date.now() - this.state.lastVibration < this.CONFIG.COOLDOWN) return;
+        
         this.state.isPeak = false;
         this.state.currentRep++;
         this.elements.repCounter.textContent = `${this.state.currentRep}/${this.CONFIG.TOTAL_REPS}`;
@@ -151,46 +146,69 @@ class BicepTrainer {
             this.vibrate(this.CONFIG.VIBRATION.REP);
             this.showFeedback(`完成 ${this.state.currentRep}/${this.CONFIG.TOTAL_REPS} 次`);
         }
+        
+        this.state.lastVibration = Date.now();
     }
 
     finishTraining() {
         this.state.isTraining = false;
         this.showReport();
         this.vibrate(this.CONFIG.VIBRATION.FINISH);
+        window.removeEventListener('deviceorientation', this.handleOrientation);
     }
 
     showReport() {
+        const duration = ((Date.now() - this.state.startTime) / 1000).toFixed(1);
         const analysis = this.analyzePerformance();
+        
         this.elements.analysisResult.innerHTML = `
-            <p>✅ 完成3次弯举</p>
-            <p>平均速度: ${analysis.avgSpeed.toFixed(1)}°/s</p>
-            <p>离心时间: ${analysis.eccentricTime}s</p>
-            ${analysis.tips}
+            <div class="report-item">
+                <h3>🏆 训练完成</h3>
+                <p>总用时: ${duration}秒</p>
+            </div>
+            <div class="report-item">
+                <h3>📈 动作分析</h3>
+                <p>平均速度: ${analysis.avgSpeed}°/s</p>
+                <p>离心时间: ${analysis.eccentricTime}s</p>
+                <p>动作幅度: ${analysis.range}%</p>
+            </div>
+            <div class="tips">
+                <h3>💡 改进建议</h3>
+                ${analysis.tips}
+            </div>
         `;
         this.elements.resultModal.style.display = 'block';
     }
 
     analyzePerformance() {
-        // 简化的分析逻辑
+        // 示例分析数据（实际应基于motionData计算）
         return {
-            avgSpeed: 45.6,
-            eccentricTime: 2.3,
-            tips: "建议：保持匀速，注意离心控制"
+            avgSpeed: "45.6",
+            eccentricTime: "2.3",
+            range: "92",
+            tips: "保持匀速，注意离心阶段的控制"
         };
     }
 
-    restart() {
+    reset() {
         this.state = {
             isTraining: false,
             baseGamma: null,
             currentRep: 0,
             isPeak: false,
-            motionData: []
+            motionData: [],
+            startTime: null
         };
+        this.updateUI(0);
+        this.elements.repCounter.textContent = "0/3";
+        this.showFeedback("已重置训练数据");
+    }
+
+    restart() {
+        this.reset();
         this.elements.resultModal.style.display = 'none';
         this.elements.container.style.display = 'none';
         this.elements.initModal.classList.add('active');
-        this.showFeedback("准备就绪");
     }
 
     vibrate(pattern) {
@@ -201,16 +219,6 @@ class BicepTrainer {
         this.elements.feedback.textContent = text;
     }
 
-    showPermissionHelp() {
-        this.elements.permissionHelp.style.display = 'block';
-    }
-
-    checkOrientation() {
-        if (window.matchMedia("(orientation: landscape)").matches) return true;
-        this.showFeedback("请横屏使用");
-        return false;
-    }
-
     recordMotionData(gamma, progress) {
         this.state.motionData.push({
             timestamp: Date.now(),
@@ -218,7 +226,12 @@ class BicepTrainer {
             progress
         });
     }
+
+    initProgressRing() {
+        this.elements.ctx.lineWidth = 10;
+        this.elements.ctx.strokeStyle = '#4CAF50';
+        this.elements.ctx.lineCap = 'round';
+    }
 }
 
-// 启动应用
 new BicepTrainer();
