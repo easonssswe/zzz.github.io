@@ -2,76 +2,74 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 关键meta标签 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>二头弯举训练(iOS版)</title>
+    <title>智能二头弯举训练</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* iOS弹窗特殊样式 */
-        .modal-content {
-            -webkit-overflow-scrolling: touch; /* 平滑滚动 */
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        button {
-            -webkit-tap-highlight-color: transparent; /* 移除点击高亮 */
+        /* iOS点击高光移除 */
+        * {
+            -webkit-tap-highlight-color: transparent;
         }
     </style>
 </head>
 <body>
-<!-- 权限引导提示 -->
-<div id="permissionHelp" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); color:white; padding:20px; z-index:1000;">
-    <h2>如何开启权限？</h2>
-    <ol>
-        <li>点击屏幕上方出现的权限提示栏</li>
-        <li>选择"允许运动与方向访问"</li>
-        <li>刷新页面后重新开始</li>
-    </ol>
-    <button onclick="location.reload()">我已开启权限</button>
-</div>
-    <!-- 初始提示弹窗（强制显示） -->
+    <!-- 初始提示弹窗 -->
     <div id="initModal" class="modal active">
         <div class="modal-content">
-            <h2>iOS使用说明</h2>
-            <div class="steps">
+            <h2>🏋️ 使用说明</h2>
+            <div class="instruction">
                 <div class="step">
-                    <span class="emoji">🔒</span>
-                    <p>打开<strong>方向锁定</strong></p>
+                    <div class="number">1</div>
+                    <p>开启<strong>方向锁定</strong></p>
                 </div>
                 <div class="step">
-                    <span class="emoji">📱</span>
+                    <div class="number">2</div>
                     <p><strong>横屏</strong>握持手机</p>
                 </div>
-                <div class="step">
-                    <span class="emoji">👆</span>
-                    <p>点击下方按钮开始</p>
-                </div>
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIiBmb250LXNpemU9IjE0Ij7miqTmtYvor5Xlm77moIc8L3RleHQ+PC9zdmc+" 
+                         alt="横屏示意图" 
+                         class="demo-img">
             </div>
-            <button id="startBtn">开始校准</button>
+            <button id="startBtn">🚀 开始训练</button>
         </div>
     </div>
 
     <!-- 主界面 -->
     <div class="container">
-        <!-- 调试信息（开发时可见） -->
-        <div id="debugInfo" style="display:none;"></div>
+        <!-- 校准按钮 -->
+        <button id="calibrateBtn" class="control-btn">🎯 校准起始位</button>
         
         <!-- 训练界面 -->
-        <div id="trainingUI">
-            <div id="repCounter">0/3</div>
-            <canvas id="progressRing" width="200" height="200"></canvas>
-            <div id="percentage">0%</div>
-            <div id="arm"></div>
-            <div id="feedback">准备校准...</div>
+        <div class="training-ui">
+            <div id="repCounter" class="rep-counter">0/3</div>
+            
+            <div class="ring-container">
+                <canvas id="progressRing" width="200" height="200"></canvas>
+                <div id="percentage" class="percentage">0%</div>
+            </div>
+            
+            <div id="arm" class="arm"></div>
+            
+            <div id="feedback" class="feedback"></div>
         </div>
 
         <!-- 结果弹窗 -->
         <div id="resultModal" class="modal">
             <div class="modal-content">
-                <h2>训练报告</h2>
-                <div id="analysisResult"></div>
-                <button id="restartBtn">重新开始</button>
+                <h2>📊 训练报告</h2>
+                <div id="analysisResult" class="analysis"></div>
+                <button id="restartBtn" class="action-btn">🔄 重新开始</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 权限提示 -->
+    <div id="permissionHelp" class="modal">
+        <div class="modal-content">
+            <h2>🔑 需要权限</h2>
+            <p>请允许"运动与方向"访问权限</p>
+            <button onclick="location.reload()" class="action-btn">🔄 我已开启权限</button>
         </div>
     </div>
 

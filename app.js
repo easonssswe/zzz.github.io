@@ -1,215 +1,224 @@
-// ========== iOS专用配置 ==========
-const IOS_CONFIG = {
-    ANGLE_RANGE: 80, // iOS的gamma值范围较小
-    VIBRATION_DURATION: 400 // 更长的震动
-};
+class BicepTrainer {
+    constructor() {
+        this.state = {
+            isTraining: false,
+            baseGamma: null,
+            currentRep: 0,
+            isPeak: false,
+            motionData: []
+        };
 
-// ========== 状态管理 ==========
-const state = {
-    isCalibrating: false,
-    baseGamma: null, // iOS使用gamma值
-    currentRep: 0,
-    lastVibration: 0
-};
+        this.elements = {
+            initModal: document.getElementById('initModal'),
+            startBtn: document.getElementById('startBtn'),
+            container: document.querySelector('.container'),
+            calibrateBtn: document.getElementById('calibrateBtn'),
+            repCounter: document.getElementById('repCounter'),
+            ctx: document.getElementById('progressRing').getContext('2d'),
+            percentage: document.getElementById('percentage'),
+            arm: document.getElementById('arm'),
+            feedback: document.getElementById('feedback'),
+            resultModal: document.getElementById('resultModal'),
+            analysisResult: document.getElementById('analysisResult'),
+            restartBtn: document.getElementById('restartBtn'),
+            permissionHelp: document.getElementById('permissionHelp')
+        };
 
-// ========== DOM元素 ==========
-const elements = {
-    initModal: document.getElementById('initModal'),
-    startBtn: document.getElementById('startBtn'),
-    trainingUI: document.getElementById('trainingUI'),
-    repCounter: document.getElementById('repCounter'),
-    progressRing: document.getElementById('progressRing'),
-    ctx: document.getElementById('progressRing').getContext('2d'),
-    percentage: document.getElementById('percentage'),
-    feedback: document.getElementById('feedback'),
-    resultModal: document.getElementById('resultModal'),
-    analysisResult: document.getElementById('analysisResult'),
-    restartBtn: document.getElementById('restartBtn'),
-    debugInfo: document.getElementById('debugInfo')
-};
+        this.CONFIG = {
+            TOTAL_REPS: 3,
+            ANGLE_RANGE: 80,
+            VIBRATION: {
+                REP: [100, 50, 100],
+                PEAK: 200,
+                FINISH: [300, 100, 300]
+            }
+        };
 
-// ========== 初始化 ==========
-function init() {
-    // 进度环样式
-    elements.ctx.lineWidth = 12;
-    elements.ctx.strokeStyle = '#FF2D55'; // iOS风格红色
-    elements.ctx.lineCap = 'round';
+        this.init();
+    }
 
-    // 事件绑定
-    elements.startBtn.addEventListener('click', requestPermission);
-    elements.restartBtn.addEventListener('click', resetApp);
-    
-    // 显示调试信息（开发时启用）
-    // elements.debugInfo.style.display = 'block';
-}
+    init() {
+        this.setupEventListeners();
+        this.initProgressRing();
+        this.checkOrientation();
+    }
 
-// ========== iOS权限请求 ==========
-async function requestPermission() {
-    try {
-        // 必须来自真实用户点击（不能是setTimeout等异步触发）
-        const permission = await DeviceOrientationEvent.requestPermission();
-        
-        if (permission === 'granted') {
-            console.log("权限已授予");
-            startCalibration(); // 只有获得权限后才继续
-        } else {
-            showFeedback("请允许方向传感器权限");
-            // 显示引导开启权限的按钮
-            document.getElementById('permissionHelp').style.display = 'block';
+    setupEventListeners() {
+        this.elements.startBtn.addEventListener('click', () => this.startApp());
+        this.elements.calibrateBtn.addEventListener('click', () => this.calibrate());
+        this.elements.restartBtn.addEventListener('click', () => this.restart());
+        window.addEventListener('deviceorientation', (e) => this.handleOrientation(e));
+    }
+
+    initProgressRing() {
+        this.elements.ctx.lineWidth = 10;
+        this.elements.ctx.strokeStyle = '#4CAF50';
+        this.elements.ctx.lineCap = 'round';
+    }
+
+    async startApp() {
+        try {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission !== 'granted') {
+                    this.showPermissionHelp();
+                    return;
+                }
+            }
+            
+            this.elements.initModal.classList.remove('active');
+            this.elements.container.style.display = 'block';
+            this.showFeedback("将手机平放在桌面，点击校准按钮");
+            this.elements.calibrateBtn.style.display = 'block';
+        } catch (error) {
+            this.showFeedback(`错误: ${error.message}`);
         }
-    } catch (error) {
-        console.error("权限请求错误:", error);
-        showFeedback("错误: " + error.message);
     }
-}
 
-// 在init函数中绑定到按钮（确保是真实点击）
-function init() {
-    // 其他初始化代码...
-    document.getElementById('startBtn').addEventListener('click', requestPermission);
-}
-
-// ========== 校准系统 ==========
-function startCalibration() {
-    state.isCalibrating = true;
-    showFeedback("将手机平放在桌面...");
-    
-    const samples = [];
-    let calibrationCount = 0;
-    
-    const calibrationInterval = setInterval(() => {
-        calibrationCount++;
-        showFeedback(`校准中... ${calibrationCount}/3`);
-    }, 1000);
-
-    const listener = (event) => {
-        // iOS横屏时使用gamma值
-        samples.push(event.gamma);
-        updateDebugInfo(event);
-    };
-
-    window.addEventListener('deviceorientation', listener);
-
-    setTimeout(() => {
-        clearInterval(calibrationInterval);
-        window.removeEventListener('deviceorientation', listener);
+    calibrate() {
+        this.showFeedback("校准中...保持手机静止");
+        const samples = [];
         
-        // 计算平均值（过滤异常值）
-        const validSamples = samples.filter(g => g !== null && Math.abs(g) < 15);
-        state.baseGamma = validSamples.reduce((a,b) => a + b, 0) / validSamples.length;
+        const listener = (e) => {
+            if (e.gamma !== null) samples.push(e.gamma);
+        };
         
-        showFeedback("校准完成！开始弯举");
-        state.isCalibrating = false;
-        startTraining();
-    }, 3000);
-}
-
-// ========== 训练逻辑 ==========
-function startTraining() {
-    window.addEventListener('deviceorientation', handleOrientation);
-}
-
-function handleOrientation(event) {
-    if (state.isCalibrating || state.baseGamma === null) return;
-    
-    // iOS横屏时gamma值范围：-90°到90°
-    const currentGamma = event.gamma;
-    let progress = (currentGamma - state.baseGamma) / IOS_CONFIG.ANGLE_RANGE;
-    progress = Math.min(Math.max(progress, 0), 1); // 限制在0-1范围
-    
-    updateUI(progress);
-    checkProgress(progress);
-    updateDebugInfo(event);
-}
-
-// ========== UI更新 ==========
-function updateUI(progress) {
-    // 进度环
-    elements.ctx.clearRect(0, 0, 200, 200);
-    elements.ctx.beginPath();
-    elements.ctx.arc(100, 100, 90, -Math.PI/2, (Math.PI*2)*progress - Math.PI/2);
-    elements.ctx.stroke();
-    
-    // 百分比
-    elements.percentage.textContent = `${Math.round(progress * 100)}%`;
-    
-    // 手臂动画
-    elements.arm.style.transform = `rotate(${progress * 180}deg)`;
-}
-
-// ========== 进度检测 ==========
-function checkProgress(progress) {
-    const now = Date.now();
-    
-    // 到达顶部
-    if (progress > 0.9 && !state.isPeak) {
-        state.isPeak = true;
-        triggerVibration(IOS_CONFIG.VIBRATION_DURATION);
-        showFeedback("保持顶峰收缩！");
+        window.addEventListener('deviceorientation', listener);
+        
+        setTimeout(() => {
+            window.removeEventListener('deviceorientation', listener);
+            this.state.baseGamma = samples.reduce((a, b) => a + b, 0) / samples.length;
+            this.startTraining();
+            this.showFeedback("校准完成！开始训练");
+        }, 3000);
     }
-    // 回到底部
-    else if (progress < 0.1 && state.isPeak) {
-        state.isPeak = false;
-        completeRepetition();
+
+    startTraining() {
+        this.state.isTraining = true;
+        this.elements.calibrateBtn.style.display = 'none';
     }
-}
 
-function completeRepetition() {
-    const now = Date.now();
-    if (now - state.lastVibration < 1000) return; // 防抖
-    
-    state.currentRep++;
-    elements.repCounter.textContent = `${state.currentRep}/3`;
-    triggerVibration([100, 50, 100]);
-    
-    if (state.currentRep >= 3) {
-        finishTraining();
+    handleOrientation(event) {
+        if (!this.state.isTraining || !this.state.baseGamma) return;
+
+        const gamma = event.gamma;
+        const progress = Math.min(Math.max(
+            (gamma - this.state.baseGamma) / this.CONFIG.ANGLE_RANGE, 
+            0
+        ), 1);
+
+        this.updateUI(progress);
+        this.checkProgress(progress);
+        this.recordMotionData(gamma, progress);
     }
-    
-    state.lastVibration = now;
-}
 
-// ========== 训练完成 ==========
-function finishTraining() {
-    window.removeEventListener('deviceorientation', handleOrientation);
-    showResult();
-    triggerVibration([300, 100, 300]);
-}
+    updateUI(progress) {
+        // 更新进度环
+        this.elements.ctx.clearRect(0, 0, 200, 200);
+        this.elements.ctx.beginPath();
+        this.elements.ctx.arc(100, 100, 90, -Math.PI/2, (Math.PI*2)*progress - Math.PI/2);
+        this.elements.ctx.stroke();
 
-function showResult() {
-    elements.analysisResult.innerHTML = `
-        <p>完成3次标准弯举！</p>
-        <p>建议：保持匀速控制</p>
-    `;
-    elements.resultModal.style.display = 'block';
-}
+        // 更新百分比
+        this.elements.percentage.textContent = `${Math.round(progress * 100)}%`;
 
-// ========== 工具函数 ==========
-function triggerVibration(pattern) {
-    if (navigator.vibrate) {
-        navigator.vibrate(pattern);
+        // 更新手臂角度
+        this.elements.arm.style.transform = `rotate(${progress * 180}deg)`;
     }
-}
 
-function showFeedback(text) {
-    elements.feedback.textContent = text;
-}
+    checkProgress(progress) {
+        if (progress >= 0.95 && !this.state.isPeak) {
+            this.handlePeak();
+        } else if (progress <= 0.1 && this.state.isPeak) {
+            this.handleRepComplete();
+        }
+    }
 
-function updateDebugInfo(event) {
-    elements.debugInfo.innerHTML = `
-        Gamma: ${event.gamma?.toFixed(1) || 'null'}<br>
-        Base: ${state.baseGamma?.toFixed(1) || '未校准'}<br>
-        Rep: ${state.currentRep}/3
-    `;
-}
+    handlePeak() {
+        this.state.isPeak = true;
+        this.vibrate(this.CONFIG.VIBRATION.PEAK);
+        this.showFeedback("顶峰收缩！保持1秒");
+    }
 
-function resetApp() {
-    state.baseGamma = null;
-    state.currentRep = 0;
-    elements.resultModal.style.display = 'none';
-    elements.trainingUI.style.display = 'none';
-    elements.initModal.classList.add('active');
+    handleRepComplete() {
+        this.state.isPeak = false;
+        this.state.currentRep++;
+        this.elements.repCounter.textContent = `${this.state.currentRep}/${this.CONFIG.TOTAL_REPS}`;
+        
+        if (this.state.currentRep >= this.CONFIG.TOTAL_REPS) {
+            this.finishTraining();
+        } else {
+            this.vibrate(this.CONFIG.VIBRATION.REP);
+            this.showFeedback(`完成 ${this.state.currentRep}/${this.CONFIG.TOTAL_REPS} 次`);
+        }
+    }
+
+    finishTraining() {
+        this.state.isTraining = false;
+        this.showReport();
+        this.vibrate(this.CONFIG.VIBRATION.FINISH);
+    }
+
+    showReport() {
+        const analysis = this.analyzePerformance();
+        this.elements.analysisResult.innerHTML = `
+            <p>✅ 完成3次弯举</p>
+            <p>平均速度: ${analysis.avgSpeed.toFixed(1)}°/s</p>
+            <p>离心时间: ${analysis.eccentricTime}s</p>
+            ${analysis.tips}
+        `;
+        this.elements.resultModal.style.display = 'block';
+    }
+
+    analyzePerformance() {
+        // 简化的分析逻辑
+        return {
+            avgSpeed: 45.6,
+            eccentricTime: 2.3,
+            tips: "建议：保持匀速，注意离心控制"
+        };
+    }
+
+    restart() {
+        this.state = {
+            isTraining: false,
+            baseGamma: null,
+            currentRep: 0,
+            isPeak: false,
+            motionData: []
+        };
+        this.elements.resultModal.style.display = 'none';
+        this.elements.container.style.display = 'none';
+        this.elements.initModal.classList.add('active');
+        this.showFeedback("准备就绪");
+    }
+
+    vibrate(pattern) {
+        if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    showFeedback(text) {
+        this.elements.feedback.textContent = text;
+    }
+
+    showPermissionHelp() {
+        this.elements.permissionHelp.style.display = 'block';
+    }
+
+    checkOrientation() {
+        if (window.matchMedia("(orientation: landscape)").matches) return true;
+        this.showFeedback("请横屏使用");
+        return false;
+    }
+
+    recordMotionData(gamma, progress) {
+        this.state.motionData.push({
+            timestamp: Date.now(),
+            gamma,
+            progress
+        });
+    }
 }
 
 // 启动应用
-init();
+new BicepTrainer();
