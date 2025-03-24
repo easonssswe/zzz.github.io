@@ -46,19 +46,27 @@ function init() {
 // ========== iOS权限请求 ==========
 async function requestPermission() {
     try {
-        // 必须来自用户点击事件
+        // 必须来自真实用户点击（不能是setTimeout等异步触发）
         const permission = await DeviceOrientationEvent.requestPermission();
         
         if (permission === 'granted') {
-            elements.initModal.classList.remove('active');
-            elements.trainingUI.style.display = 'block';
-            startCalibration();
+            console.log("权限已授予");
+            startCalibration(); // 只有获得权限后才继续
         } else {
             showFeedback("请允许方向传感器权限");
+            // 显示引导开启权限的按钮
+            document.getElementById('permissionHelp').style.display = 'block';
         }
     } catch (error) {
+        console.error("权限请求错误:", error);
         showFeedback("错误: " + error.message);
     }
+}
+
+// 在init函数中绑定到按钮（确保是真实点击）
+function init() {
+    // 其他初始化代码...
+    document.getElementById('startBtn').addEventListener('click', requestPermission);
 }
 
 // ========== 校准系统 ==========

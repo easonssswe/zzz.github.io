@@ -19,6 +19,16 @@
     </style>
 </head>
 <body>
+<!-- 权限引导提示 -->
+<div id="permissionHelp" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); color:white; padding:20px; z-index:1000;">
+    <h2>如何开启权限？</h2>
+    <ol>
+        <li>点击屏幕上方出现的权限提示栏</li>
+        <li>选择"允许运动与方向访问"</li>
+        <li>刷新页面后重新开始</li>
+    </ol>
+    <button onclick="location.reload()">我已开启权限</button>
+</div>
     <!-- 初始提示弹窗（强制显示） -->
     <div id="initModal" class="modal active">
         <div class="modal-content">
