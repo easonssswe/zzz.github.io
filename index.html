@@ -2,44 +2,57 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <!-- 关键meta标签 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智能二头弯举训练</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>二头弯举训练(iOS版)</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* iOS弹窗特殊样式 */
+        .modal-content {
+            -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        button {
+            -webkit-tap-highlight-color: transparent; /* 移除点击高亮 */
+        }
+    </style>
 </head>
 <body>
-    <!-- 初始提示弹窗 -->
+    <!-- 初始提示弹窗（强制显示） -->
     <div id="initModal" class="modal active">
         <div class="modal-content">
-            <h2>使用说明</h2>
-            <div class="instruction">
+            <h2>iOS使用说明</h2>
+            <div class="steps">
                 <div class="step">
-                    <div class="icon">1</div>
-                    <p>开启手机方向锁定</p>
+                    <span class="emoji">🔒</span>
+                    <p>打开<strong>方向锁定</strong></p>
                 </div>
                 <div class="step">
-                    <div class="icon">2</div>
-                    <p>横屏握持手机</p>
+                    <span class="emoji">📱</span>
+                    <p><strong>横屏</strong>握持手机</p>
                 </div>
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAHvSURBVHgB7d2xTgJBFIbhQ0NjY2NjY0NMLHwBG2NlQ0h8AxtjY2PjC1hY2djY2FgQAwWx0MTExMTExMTExMTExMTExMTE5C7/sGxCYHF3ZmeW+ZKT3dndwJfDzNkZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAnbq6Vq7r2w3tXHtX8H1n2rV2qH1rN9qX9qG9a6/ai/aU6Xx8U3vSnrVX7U371D61L+1b+9F+AQAAAAAAAAAAAAAAgHr0dK1T17eH2m8JvvdOu9EutUvtTLvQzrVL7Vq70W61O+1ee9AetUftWXvRXrU37V371D61LwAAAAAAAAAAAAAAAKBZfV0b1vWt0F5K8P0/2rv2pr1qr9qL9qy9aC/am/aqfWjv2qf2qX1p3wAAAAAAAAAAAAAAAED7DHRtUte3J9pfCb7/V3vX3rRX7VV70Z61F+1Fe9NetQ/tXfvUPrUv7RsAAAAAAAAAAAAAAABol5Gu5XV9e6/9l+D7/7QP7V371D61LwAAAAAAAAAAAAAAAKBdCl0b1/Wt0L5K8P1/2qf2qX1p3wAAAAAAAAAAAAAAAEC7jHVtVte3j9pfCb7/T/vUPrUv7RsAAAAAAAAAAAAAAABol6muzev69kn7L8H3/2kf2rv2qX1qXwAAAAAAAAAAAAAAAEC7zHRtWde3z9p/Cb7/T3vX3rRX7VV70Z61F+1Fe9NetQ/tXfvUPrUvAAAAAAAAAAAAAAAAoF1yXZvU9e2L9l+C7//TPrR37VP71L4AAAAAAAAAAAAAAACAdlnq2qKub1+1/xJ8/5/2pr1qr9qL9qy9aC/am/aqfWjv2qf2qX0BAAAAAAAAAAAAAAAA7TLXtWVd375p/yX4/j/tQ3vXPrVP7QsAAAAAAAAAAAAAAABol5Wu5XV9+679l+D7/7R37U171V61F+1Ze9FetDftVfvQ3rVP7VP7AgAAAAAAAAAAAAAAANplqmuLur591/5L8P1/2rv2pr1qr9qL9qy9aC/am/aqfWjv2qf2qX0BAAAAAAAAAAAAAAAA7bLQtVVd335o/yX4/j/tQ3vXPrVP7QsAAAAAAAAAAAAAAABol7WurXV9+6n9l+D7/7Q37VV71V60Z+1Fe9HetFftQ3vXPrVP7QsAAAAAAAAAAAAAAABol4Wu5XV9+6X9l+D7/7QP7V371D61LwAAAAAAAAAAAAAAAKBdCl1b1fXtt/Zfgu//0961N+1Ve9VetGftRXvR3rRX7UN71z61T+0LAAAAAAAAAAAAAAAAaJe5ri3r+vZb+y/B9/9p79qb9qq9ai/as/aivWhv2qv2ob1rn9qn9gUAAAAAAAAAAAAAAAC0S65rk7q+/db+S/D9f9q79qa9aq/ai/asvWgv2pv2qn1o79qn9ql9AQAAAAAAAAAAAAAAAHX6B6Rq/9jqjXjJAAAAAElFTkSuQmCC" alt="横屏示意图" class="landscape-img">
+                <div class="step">
+                    <span class="emoji">👆</span>
+                    <p>点击下方按钮开始</p>
+                </div>
             </div>
-            <button id="startBtn">我已准备好</button>
+            <button id="startBtn">开始校准</button>
         </div>
     </div>
 
     <!-- 主界面 -->
     <div class="container">
-        <!-- 校准按钮 -->
-        <button id="calibrateBtn">校准起始位置</button>
+        <!-- 调试信息（开发时可见） -->
+        <div id="debugInfo" style="display:none;"></div>
         
         <!-- 训练界面 -->
-        <div class="training-ui">
+        <div id="trainingUI">
             <div id="repCounter">0/3</div>
-            <div class="ring-container">
-                <canvas id="progressRing" width="200" height="200"></canvas>
-                <div id="percentage">0%</div>
-            </div>
+            <canvas id="progressRing" width="200" height="200"></canvas>
+            <div id="percentage">0%</div>
             <div id="arm"></div>
-            <div id="feedback"></div>
+            <div id="feedback">准备校准...</div>
         </div>
 
         <!-- 结果弹窗 -->
