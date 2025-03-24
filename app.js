@@ -1,14 +1,15 @@
-// app.js
 class BicepTrainer {
     constructor() {
         this.state = {
-            isTraining: false,  // 原有属性
-            baseGamma: null,    // 原有属性
-            currentRep: 0,      // 原有属性
-            isPeak: false,      // 原有属性
-            motionData: [],     // 原有属性
-            startTime: null,    // 原有属性
-            isProcessing: false // 新增属性（最后一行无逗号）
+            isTraining: false,
+            baseGamma: null,
+            currentRep: 0,
+            isPeak: false,
+            motionData: [],
+            startTime: null,
+            // === 新增状态 ===
+            lastVibration: 0,
+            isProcessing: false
         };
 
         this.elements = {
@@ -39,6 +40,39 @@ class BicepTrainer {
         };
 
         this.init();
+
+        // === 调试代码（可删除）===
+        console.log("系统初始化完成", {
+            hasProgressEl: !!document.getElementById('calibrationProgress'),
+            sensorSupport: !!window.DeviceOrientationEvent
+        });
+    }
+
+    // === 新增方法 ===
+    showCalibrationProgress() {
+        const progressEl = document.getElementById('calibrationProgress');
+        if (!progressEl) {
+            console.error("进度条元素未找到");
+            return;
+        }
+        
+        progressEl.style.display = 'block';
+        const bar = progressEl.querySelector('.progress-bar');
+        const text = progressEl.querySelector('.progress-text');
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 10;
+            bar.style.width = `${progress}%`;
+            text.textContent = `${progress}%`;
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    progressEl.style.display = 'none';
+                }, 500);
+            }
+        }, 300);
     }
 
     init() {
@@ -57,33 +91,48 @@ class BicepTrainer {
         try {
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 const permission = await DeviceOrientationEvent.requestPermission();
-                if (permission !== 'granted') return;
+                if (permission !== 'granted') {
+                    this.showFeedback("请允许方向传感器权限");
+                    return false;
+                }
             }
             
             this.elements.initModal.classList.remove('active');
             this.elements.container.style.display = 'block';
             this.showFeedback("请将手机平放后点击校准");
+            return true;
         } catch (error) {
             this.showFeedback(`错误: ${error.message}`);
+            return false;
         }
     }
 
+    // === 修改后的校准方法 ===
     calibrate() {
         this.showCalibrationProgress();
         this.showFeedback("校准中...保持手机静止");
         const samples = [];
         
         const listener = (e) => {
-            if (e.gamma !== null) samples.push(e.gamma);
+            if (e.gamma !== null) {
+                samples.push(e.gamma);
+                console.debug("[校准] gamma:", e.gamma); // 调试输出
+            }
         };
         
         window.addEventListener('deviceorientation', listener);
         
         setTimeout(() => {
             window.removeEventListener('deviceorientation', listener);
+            
+            if (samples.length === 0) {
+                this.showFeedback("校准失败：未获取到数据");
+                return;
+            }
+            
             this.state.baseGamma = samples.reduce((a, b) => a + b, 0) / samples.length;
+            this.showFeedback(`校准成功！基准值: ${this.state.baseGamma.toFixed(1)}°`);
             this.startTraining();
-            this.showFeedback("校准完成！开始训练");
         }, 3000);
     }
 
@@ -94,9 +143,8 @@ class BicepTrainer {
     }
 
     handleOrientation(event) {
-        if (this.state.isProcessing || Date.now() - this.state.lastVibration < this.CONFIG.COOLDOWN) return;
-this.state.isProcessing = true;
-        if (!this.state.isTraining || !this.state.baseGamma) return;
+        if (!this.state.isTraining || this.state.isProcessing || !this.state.baseGamma) return;
+        this.state.isProcessing = true; // 加锁
 
         const gamma = event.gamma;
         const progress = Math.min(Math.max(
@@ -107,20 +155,16 @@ this.state.isProcessing = true;
         this.updateUI(progress);
         this.checkProgress(progress);
         this.recordMotionData(gamma, progress);
-        this.state.isProcessing = false;
+        
+        this.state.isProcessing = false; // 解锁
     }
 
     updateUI(progress) {
-        // 更新进度环
         this.elements.ctx.clearRect(0, 0, 200, 200);
         this.elements.ctx.beginPath();
         this.elements.ctx.arc(100, 100, 90, -Math.PI/2, (Math.PI*2)*progress - Math.PI/2);
         this.elements.ctx.stroke();
-
-        // 更新百分比
         this.elements.percentage.textContent = `${Math.round(progress * 100)}%`;
-
-        // 更新手臂角度
         this.elements.arm.style.transform = `rotate(${progress * 180}deg)`;
     }
 
@@ -144,15 +188,14 @@ this.state.isProcessing = true;
         this.state.isPeak = false;
         this.state.currentRep++;
         this.elements.repCounter.textContent = `${this.state.currentRep}/${this.CONFIG.TOTAL_REPS}`;
+        this.vibrate(this.CONFIG.VIBRATION.REP);
+        this.state.lastVibration = Date.now();
         
         if (this.state.currentRep >= this.CONFIG.TOTAL_REPS) {
             this.finishTraining();
         } else {
-            this.vibrate(this.CONFIG.VIBRATION.REP);
             this.showFeedback(`完成 ${this.state.currentRep}/${this.CONFIG.TOTAL_REPS} 次`);
         }
-        
-        this.state.lastVibration = Date.now();
     }
 
     finishTraining() {
@@ -175,7 +218,6 @@ this.state.isProcessing = true;
                 <h3>📈 动作分析</h3>
                 <p>平均速度: ${analysis.avgSpeed}°/s</p>
                 <p>离心时间: ${analysis.eccentricTime}s</p>
-                <p>动作幅度: ${analysis.range}%</p>
             </div>
             <div class="tips">
                 <h3>💡 改进建议</h3>
@@ -186,12 +228,20 @@ this.state.isProcessing = true;
     }
 
     analyzePerformance() {
-        // 示例分析数据（实际应基于motionData计算）
+        const motionData = this.state.motionData;
+        const durations = [];
+        for (let i = 1; i < motionData.length; i++) {
+            durations.push(motionData[i].timestamp - motionData[i-1].timestamp);
+        }
+        const avgDuration = durations.length > 0 ? 
+            (durations.reduce((a,b) => a + b, 0) / durations.length : 0;
+        
         return {
-            avgSpeed: "45.6",
-            eccentricTime: "2.3",
-            range: "92",
-            tips: "保持匀速，注意离心阶段的控制"
+            avgSpeed: (avgDuration > 0 ? (90 / avgDuration * 1000).toFixed(1) : "N/A"),
+            eccentricTime: "2.3", // 示例值
+            tips: motionData.length < 10 ? 
+                "数据不足，请完成完整动作" : 
+                "保持匀速，注意离心控制"
         };
     }
 
@@ -202,7 +252,9 @@ this.state.isProcessing = true;
             currentRep: 0,
             isPeak: false,
             motionData: [],
-            startTime: null
+            startTime: null,
+            lastVibration: 0,
+            isProcessing: false
         };
         this.updateUI(0);
         this.elements.repCounter.textContent = "0/3";
@@ -229,7 +281,8 @@ this.state.isProcessing = true;
         this.state.motionData.push({
             timestamp: Date.now(),
             gamma,
-            progress
+            progress,
+            phase: this.state.isPeak ? 'down' : 'up'
         });
     }
 
