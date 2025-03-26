@@ -8,7 +8,7 @@ class BicepTrainer {
             isPeak: false,      // 原有属性
             motionData: [],     // 原有属性
             startTime: null,    // 原有属性
-            isProcessing: false // 新增属性（最后一行无逗号）
+            isProcessing: false // 新增属性（最后一行无逗）
         };
 
         this.elements = {
